@@ -46,13 +46,14 @@ module Alchemy
       def get_search_results
         search_results = []
         %w(Alchemy::EssenceText Alchemy::EssenceRichtext).each do |e|
-          search_results += e.constantize.includes(contents: {element: 'page'}).find_with_ferret(
+          #search_results += e.constantize.includes(contents: {element: 'page'}).find_with_ferret(
+          search_results += e.constantize.includes(:page).find_with_ferret(
             "*#{params[:query]}*",
             {limit: :all},
             {
               conditions: [
                 'alchemy_pages.public = ? AND alchemy_pages.layoutpage = ? AND alchemy_pages.restricted = ? AND alchemy_pages.language_id = ?',
-                true, false, false, session[:language_id]
+                true, false, false, @language.id #session[:language_id]
               ],
               references: 'alchemy_pages'
             }
@@ -71,7 +72,7 @@ module Alchemy
         if searchresult_page_layout = PageLayout.get_all_by_attributes(:searchresults => true).first
           search_result_page = Page.published.where(
             :page_layout => searchresult_page_layout["name"],
-            :language_id => session[:language_id]
+            :language_id => @language.id
           ).limit(1).first
         end
         if search_result_page.nil?
